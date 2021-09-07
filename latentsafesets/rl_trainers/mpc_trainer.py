@@ -22,10 +22,6 @@ class MPCTrainer(Trainer):
 
         self.trainers.append(VAETrainer(params, modules['enc'], loss_plotter))
         self.trainers.append(PETSDynamicsTrainer(params, modules['dyn'], loss_plotter))
-        self.trainers.append(ValueTrainer(env, params, modules['val'], loss_plotter))
-        self.trainers.append(SafeSetTrainer(env, params, modules['ss'], loss_plotter))
-        self.trainers.append(ConstraintTrainer(env, params, modules['constr'], loss_plotter))
-        self.trainers.append(GoalIndicatorTrainer(env, params, modules['gi'], loss_plotter))
 
     def initial_train(self, replay_buffer):
         update_dir = os.path.join(self.logdir, 'initial_train')

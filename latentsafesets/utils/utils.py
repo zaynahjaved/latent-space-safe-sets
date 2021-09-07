@@ -169,7 +169,7 @@ def make_env(params, monitoring=False):
     return env
 
 
-def make_modules(params, ss=False, val=False, dyn=False,
+def make_modules(params, ss=False, val=True, dyn=False,
                  gi=False, constr=False):
     from latentsafesets.modules import VanillaVAE, ValueEnsemble, \
         ValueFunction, PETSDynamics, GoalIndicator, ConstraintEstimator, BCSafeSet, \

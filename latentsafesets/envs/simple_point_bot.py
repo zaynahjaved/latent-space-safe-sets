@@ -82,6 +82,10 @@ class SimplePointBot(Env, utils.EzPickle):
             "action": a
         }
 
+    def get_goalim(self):
+        # Put the agent at self.end_pos and render the corresponding image
+       return self._state_to_image(self.end_pos)
+
     def reset(self, random_start=False):
         if random_start:
             self.state = np.random.random(2) * (WINDOW_WIDTH, WINDOW_HEIGHT)

@@ -23,21 +23,15 @@ log = logging.getLogger('cem')
 class CEMSafeSetPolicy(Policy):
     def __init__(self, env: gym.Env,
                  encoder: VanillaVAE,
-                 safe_set,
-                 value_function: ValueFunction,
                  dynamics_model: PETSDynamics,
-                 constraint_function: ConstraintEstimator,
-                 goal_indicator: GoalIndicator,
+                 goalim,
                  params):
         log.info("setting up safe set and dynamics model")
 
         self.env = env
         self.encoder = encoder
-        self.safe_set = safe_set
         self.dynamics_model = dynamics_model
-        self.value_function = value_function
-        self.constraint_function = constraint_function
-        self.goal_indicator = goal_indicator
+        self.goalim = goalim
 
         self.logdir = params['logdir']
 
@@ -50,13 +44,6 @@ class CEMSafeSetPolicy(Policy):
         self.popsize = params['num_candidates']
         self.num_elites = params['num_elites']
         self.max_iters = params['max_iters']
-        self.safe_set_thresh = params['safe_set_thresh']
-        self.safe_set_thresh_mult = params['safe_set_thresh_mult']
-        self.safe_set_thresh_mult_iters = params['safe_set_thresh_mult_iters']
-        self.constraint_thresh = params['constr_thresh']
-        self.goal_thresh = params['gi_thresh']
-        self.ignore_safe_set = params['safe_set_ignore']
-        self.ignore_constraints = params['constr_ignore']
 
         self.mean = torch.zeros(self.d_act)
         self.std = torch.ones(self.d_act)
@@ -80,8 +67,6 @@ class CEMSafeSetPolicy(Policy):
         emb = self.encoder.encode(obs)
 
         itr = 0
-        reset_count = 0
-        act_ss_thresh = self.safe_set_thresh
         while itr < self.max_iters:
             if itr == 0:
                 # Action samples dim (num_candidates, planning_hor, d_act)
@@ -99,12 +84,6 @@ class CEMSafeSetPolicy(Policy):
                 iter_num_elites = min(num_constraint_satisfying, self.num_elites)
 
                 if num_constraint_satisfying == 0:
-                    reset_count += 1
-                    act_ss_thresh *= self.safe_set_thresh_mult
-                    if reset_count > self.safe_set_thresh_mult_iters:
-                        self.mean = None
-                        return self.env.action_space.sample()
-
                     itr = 0
                     self.mean, self.std = None, None
                     continue
@@ -126,30 +105,26 @@ class CEMSafeSetPolicy(Policy):
 
                 last_states = predictions[:, :, -1, :].reshape(
                     (num_models * num_candidates, d_latent))
-                all_values = self.value_function.get_value(last_states, already_embedded=True)
-                nans = torch.isnan(all_values)
-                all_values[nans] = -1e5
-                values = torch.mean(all_values.reshape((num_models, num_candidates, 1)), dim=0)
 
                 # Blow up cost for trajectories that are not constraint satisfying and/or don't end up
                 #   in the safe set
-                if not self.ignore_constraints:
-                    constraints_all = torch.sigmoid(self.constraint_function(predictions, already_embedded=True))
-                    constraint_viols = torch.sum(torch.max(constraints_all, dim=0)[0] > self.constraint_thresh, dim=1)
-                else:
-                    constraint_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
+                constraint_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
+                safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
 
-                if not self.ignore_safe_set:
-                    safe_set_all = self.safe_set.safe_set_probability(last_states, already_embedded=True)
-                    safe_set_viols = torch.mean(safe_set_all
-                                                .reshape((num_models, num_candidates, 1)),
-                                                dim=0) < act_ss_thresh
-                else:
-                    safe_set_viols = torch.zeros((num_candidates, 1), device=ptu.TORCH_DEVICE)
-                goal_preds = self.goal_indicator(predictions, already_embedded=True)
-                goal_states = torch.sum(torch.mean(goal_preds, dim=0) > self.goal_thresh, dim=1)
+                # Decode predictions
+                decoded_preds = []
+                for i in range(predictions.shape[0]):
+                    decoded_preds.append(self.encoder.decode(predictions[i]))
 
-                values = values + (constraint_viols + safe_set_viols) * -1e5 + goal_states
+                decoded_predictions = torch.stack(decoded_preds)
+
+                decoded_predictions_np = decoded_predictions.cpu().detach().numpy()
+                goalim_np = np.tile(self.goalim, (num_models, num_candidates, planning_hor, 1, 1, 1))
+                goal_cost = ((decoded_predictions_np - goalim_np)**2).mean(axis=(0,2,-1,-2,-3))
+                # Get cost
+                goal_cost = torch.unsqueeze(ptu.torchify(goal_cost), -1)
+                # values = goal_cost
+                values = goal_cost
                 values = values.squeeze()
 
             itr += 1

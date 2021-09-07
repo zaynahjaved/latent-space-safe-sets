@@ -28,14 +28,10 @@ if __name__ == '__main__':
 
     # Setting up encoder
 
-    modules = utils.make_modules(params, ss=True, val=True, dyn=True, gi=True, constr=True)
+    modules = utils.make_modules(params, ss=False, val=True, dyn=True, gi=False, constr=False)
 
     encoder = modules['enc']
-    safe_set = modules['ss']
     dynamics_model = modules['dyn']
-    value_func = modules['val']
-    constraint_function = modules['constr']
-    goal_indicator = modules['gi']
 
     # Populate replay buffer
 
@@ -46,8 +42,8 @@ if __name__ == '__main__':
     trainer.initial_train(replay_buffer)
 
     log.info("Creating policy")
-    policy = CEMSafeSetPolicy(env, encoder, safe_set, value_func, dynamics_model,
-                              constraint_function, goal_indicator, params)
+    goalim = env.get_goalim()
+    policy = CEMSafeSetPolicy(env, encoder, dynamics_model, goalim, params)
 
     num_updates = params['num_updates']
     traj_per_update = params['traj_per_update']
