@@ -174,8 +174,8 @@ def add_env_options(params):
             'SimplePointBotConstraints',
         ]
         params['data_counts'] = [
-            5,
-            5,
+            50,
+            50,
         ]
         params['frame_stack'] = 1
     elif params['env'] == 'reacher':
