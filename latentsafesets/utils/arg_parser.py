@@ -202,6 +202,12 @@ def add_env_options(params):
 
         params['frame_stack'] = 1
         params['horizon'] = 150
+    elif params['env'] == 'gym-cloth':
+        params['data_dirs'] = ['Gym-Cloth']
+        params['frame_stack'] = 1
+        params['data_counts'] = [10000]
+        params['buffer_size'] = 100000
+        params['d_act'] = 4
     if params['frame_stack'] == 1:
         params['d_obs'] = (3, 64, 64)
     else:
