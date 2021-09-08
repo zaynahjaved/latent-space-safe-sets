@@ -12,7 +12,7 @@ from tqdm import tqdm, trange
 from latentsafesets.utils.replay_buffer_encoded import EncodedReplayBuffer
 from latentsafesets.utils.replay_buffer import ReplayBuffer
 from gym.wrappers import FrameStack
-
+from latentsafesets.envs.gymcloth.gym_cloth.envs.cloth_env import ClothEnv
 log = logging.getLogger("utils")
 
 
@@ -157,6 +157,8 @@ def make_env(params, monitoring=False):
                            from_pixels=True, visualize_reward=False, channels_first=True)
     elif env_name == 'push':
         env = PushEnv()
+    elif env_name == 'gym-cloth':
+        env = ClothEnv('~/latentsafesets/envs/gymcloth/cfg/demo_render.yaml')
     else:
         raise NotImplementedError
 
