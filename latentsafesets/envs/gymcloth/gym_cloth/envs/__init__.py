@@ -1,1 +1,1 @@
-from gym_cloth.envs.cloth_env import ClothEnv
+#from gym_cloth.envs.cloth_env import ClothEnv

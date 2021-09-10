@@ -54,7 +54,7 @@ def add_controller_args(parser):
 
 def add_encoder_args(parser):
     # Latent embedding params
-    parser.add_argument('--d_latent', type=int, default=32,
+    parser.add_argument('--d_latent', type=int, default=256,
                         help='Size of latent space embedding')
     parser.add_argument('--enc_lr', type=float, default=1e-4,
                         help='Learning rate of encoder/decoder')
@@ -202,8 +202,8 @@ def add_env_options(params):
 
         params['frame_stack'] = 1
         params['horizon'] = 150
-    elif params['env'] == 'gym-cloth':
-        params['data_dirs'] = ['Gym-Cloth']
+    elif params['env'] == 'gym-cloth-full':
+        params['data_dirs'] = ['gym-cloth']
         params['frame_stack'] = 1
         params['data_counts'] = [10000]
         params['buffer_size'] = 100000

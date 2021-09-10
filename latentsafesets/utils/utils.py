@@ -12,7 +12,7 @@ from tqdm import tqdm, trange
 from latentsafesets.utils.replay_buffer_encoded import EncodedReplayBuffer
 from latentsafesets.utils.replay_buffer import ReplayBuffer
 from gym.wrappers import FrameStack
-from latentsafesets.envs.gymcloth.gym_cloth.envs.cloth_env import ClothEnv
+#from latentsafesets.envs.gymcloth.gym_cloth.envs.cloth_env import ClothEnv
 log = logging.getLogger("utils")
 
 
